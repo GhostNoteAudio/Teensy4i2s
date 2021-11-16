@@ -4,19 +4,19 @@
   "platforms": "Teensy",
   "keywords": "sound, audio, effect",
   "description": "Teensy 4 I2S Audio Library",
-  "url": "https://github.com/ValdemarOrn/Teensy4i2s",
+  "url": "https://github.com/GhostNoteAudio/Teensy4i2s",
   "version": "0.1",
   "export": {
   },
   "authors":
   {
-    "name": "Valdemar Erlingsson",
+    "name": "Ghost Note Audio",
     "maintainer": true
   },
   "repository":
   {
     "type": "git",
-    "url": "https://github.com/ValdemarOrn"
+    "url": "https://github.com/GhostNoteAudio"
   },
   "dependencies":
   {
