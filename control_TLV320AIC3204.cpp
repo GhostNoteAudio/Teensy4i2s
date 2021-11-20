@@ -9,6 +9,13 @@ AudioControlTLV320AIC3204::AudioControlTLV320AIC3204(uint8_t address)
     Wire.setClock(400000);
 }
 
+bool AudioControlTLV320AIC3204::testConnection()
+{
+    Wire.beginTransmission(address);
+    byte error = Wire.endTransmission();
+    return error == 0;
+}
+
 void AudioControlTLV320AIC3204::init()
 {
     // ----------------- PAGE 0 -----------------

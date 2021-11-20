@@ -8,6 +8,7 @@ class AudioControlTLV320AIC3204
 public:
     int address;
     AudioControlTLV320AIC3204(uint8_t address = 0x18);
+    bool testConnection();
     void init();
     void setPage(uint8_t page);
     uint8_t readRegister(uint8_t reg, uint8_t page);
