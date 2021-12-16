@@ -245,7 +245,7 @@ void AudioControlTLV320AIC3204::disableLoopback()
     writeRegister(0x1D, 0, 0b00000000);
 }
 
-void AudioControlTLV320AIC3204::analogInGain(uint8_t leftValue, uint8_t rightValue)
+void AudioControlTLV320AIC3204::analogInGain(int8_t leftValue, int8_t rightValue)
 {
     /*
     Set volume in 0.5db increments

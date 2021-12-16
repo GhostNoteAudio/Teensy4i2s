@@ -17,7 +17,7 @@ public:
     void enableLoopbackAdc();
     void enableLoopbackI2s();
     void disableLoopback();
-    void analogInGain(uint8_t leftValue, uint8_t rightValue);
+    void analogInGain(int8_t leftValue, int8_t rightValue);
     void dacVolume(int8_t leftValue, int8_t rightValue);
     void adcGain(int8_t leftGain, int8_t rightGain);
     void headphoneGain(int8_t leftGain, int8_t rightGain, bool mute);
