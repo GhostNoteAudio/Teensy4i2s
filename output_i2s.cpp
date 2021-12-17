@@ -46,12 +46,8 @@ static int32_t dataLB[AUDIO_BLOCK_SAMPLES] = {0};
 static int32_t dataRA[AUDIO_BLOCK_SAMPLES] = {0};
 static int32_t dataRB[AUDIO_BLOCK_SAMPLES] = {0};
 
-int DelayMicros = 0;
-int phase = 0;
-
 void audioCallbackPassthrough(int32_t** inputs, int32_t** outputs)
 {
-	delayMicroseconds(DelayMicros);
 	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
 	{
 		outputs[0][i] = inputs[0][i];
