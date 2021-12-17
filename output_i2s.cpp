@@ -136,8 +136,9 @@ void AudioOutputI2S::isr(void)
 	Timers::ResetFrame();
 	// Fetch the input samples
 	int32_t** dataInPtr = AudioInputI2S::getData();
-	// populate the next block
-	i2sAudioCallback(dataInPtr, fillBuffers);
+	// populate the next block - unless CPU is at or above 98%
+	if (Timers::GetCpuLoad() < 0.98)
+		i2sAudioCallback(dataInPtr, fillBuffers);
 	Timers::LapInner(Timers::TIMER_TOTAL);
 	
 }

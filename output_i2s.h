@@ -29,7 +29,6 @@
 #include <Arduino.h>
 #include <DMAChannel.h>
 
-extern int DelayMicros;
 extern void (*i2sAudioCallback)(int32_t** inputs, int32_t** outputs);
 
 class AudioOutputI2S
