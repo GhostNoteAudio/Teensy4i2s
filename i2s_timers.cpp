@@ -72,7 +72,7 @@ float Timers::GetAvgPeriod()
 
 float Timers::GetCpuLoad()
 {
-    return Timers::TimeAvg[Timers::TIMER_TOTAL] / TimeFramePeriod;
+    return Timers::TimePeak[Timers::TIMER_TOTAL] / TimeFramePeriod;
 }
 
 void Timers::ResetFrame()

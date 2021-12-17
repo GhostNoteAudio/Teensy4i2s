@@ -41,7 +41,7 @@ void AudioControlTLV320AIC3204::init()
     writeRegister(0x0D, 0, 0); // OSR top bits
 
     // 14: DAC OSR Setting Register 2, LSB Value - 0x00 / 0x0E
-    writeRegister(0x0E, 0, 128); // OSR = divide by 128
+    writeRegister(0x0E, 0, 128); // DOSR = divide by 128
 
     // 18: Clock Setting Register 8, NADC Values - 0x00 / 0x12
     writeRegister(0x12, 0, 0b10000001); // power on NADC, value = 1
@@ -50,7 +50,7 @@ void AudioControlTLV320AIC3204::init()
     writeRegister(0x13, 0, 0b10000010); // power on MADC, value = 2
 
     // 20: ADC Oversampling (AOSR) Register - 0x00 / 0x14
-    writeRegister(0x14, 0, 128); // OSR = divide by 128
+    writeRegister(0x14, 0, 128); // AOSR = 128
 
     // 27: Audio Interface Setting Register 1 - 0x00 / 0x1B
     writeRegister(0x1B, 0, 0b00110000); // use I2S, 32 bit samples, BCLK and WCLK and inputs. 20+ bits requires PTM_P4 (powerTune mode 4)
@@ -59,7 +59,7 @@ void AudioControlTLV320AIC3204::init()
     writeRegister(0x3C, 0, 0x08); // DAC Mode to PRB_P8
 
     // 61: ADC Signal Processing Block Control Register - 0x00 / 0x3D
-    writeRegister(0x3D, 0, 0x01); // ADC Mode to PRB_P1 -- should probably be P8!
+    writeRegister(0x3D, 0, 0x01); // ADC Mode to PRB_R1
 
     // Enable DAC -- happens at bottom of function
 

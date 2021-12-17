@@ -28,8 +28,9 @@
 
 #include <Arduino.h>
 #include <DMAChannel.h>
-#include "buffer_queue.h"
+//#include "buffer_queue.h"
 
+extern int DelayMicros;
 extern void (*i2sAudioCallback)(int32_t** inputs, int32_t** outputs);
 
 class AudioOutputI2S
@@ -41,7 +42,7 @@ public:
 
 protected:
 	static void config_i2s(bool only_bclk = false);
-	static BufferQueue buffers;
+	//static BufferQueue buffers;
 	static DMAChannel dma;
 	static void isr(void);
 };

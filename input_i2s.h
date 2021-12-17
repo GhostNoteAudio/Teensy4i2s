@@ -28,7 +28,7 @@
 
 #include <Arduino.h>
 #include <DMAChannel.h>
-#include "buffer_queue.h"
+//#include "buffer_queue.h"
 
 class AudioInputI2S
 {
@@ -40,6 +40,6 @@ protected:
 	static DMAChannel dma;
 	static void isr(void);
 
-private:
-	static BufferQueue buffers;	
+//private:
+	//static BufferQueue buffers;	
 };

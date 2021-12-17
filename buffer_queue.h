@@ -3,7 +3,7 @@
 // Circular queue of buffers used to produce and consume new blocks of audio data coming from and going to the I2S bus.
 class BufferQueue
 {
-#define BUFFER_QUEUE_SIZE 3
+#define BUFFER_QUEUE_SIZE 20
 public:
 	int32_t dataLeft[AUDIO_BLOCK_SAMPLES * BUFFER_QUEUE_SIZE];
 	int32_t dataRight[AUDIO_BLOCK_SAMPLES * BUFFER_QUEUE_SIZE];

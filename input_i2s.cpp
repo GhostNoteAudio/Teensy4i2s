@@ -27,8 +27,17 @@
 #include "AudioConfig.h"
 #include "input_i2s.h"
 
+static int32_t dataL[AUDIO_BLOCK_SAMPLES/2*8] = {0};
+static int32_t dataR[AUDIO_BLOCK_SAMPLES/2*8] = {0};
+static int32_t* bufferL[8] = {&dataL[AUDIO_BLOCK_SAMPLES/2*0], &dataL[AUDIO_BLOCK_SAMPLES/2*1], &dataL[AUDIO_BLOCK_SAMPLES/2*2], &dataL[AUDIO_BLOCK_SAMPLES/2*3],
+						      &dataL[AUDIO_BLOCK_SAMPLES/2*4], &dataL[AUDIO_BLOCK_SAMPLES/2*5], &dataL[AUDIO_BLOCK_SAMPLES/2*6], &dataL[AUDIO_BLOCK_SAMPLES/2*7]};
+static int32_t* bufferR[8] = {&dataR[AUDIO_BLOCK_SAMPLES/2*0], &dataR[AUDIO_BLOCK_SAMPLES/2*1], &dataR[AUDIO_BLOCK_SAMPLES/2*2], &dataR[AUDIO_BLOCK_SAMPLES/2*3],
+						      &dataR[AUDIO_BLOCK_SAMPLES/2*4], &dataR[AUDIO_BLOCK_SAMPLES/2*5], &dataR[AUDIO_BLOCK_SAMPLES/2*6], &dataR[AUDIO_BLOCK_SAMPLES/2*7]};
+int writeIter = 4;
+int readIter = 0;
+
 DMAMEM __attribute__((aligned(32))) static uint64_t i2s_rx_buffer[AUDIO_BLOCK_SAMPLES];
-BufferQueue AudioInputI2S::buffers;
+//BufferQueue AudioInputI2S::buffers;
 DMAChannel AudioInputI2S::dma(false);
 int32_t* outBuffers[2]; // temporary holder for the values returned by getData
 
@@ -61,19 +70,17 @@ void AudioInputI2S::begin()
 
 int32_t** AudioInputI2S::getData()
 {
-	outBuffers[0] = buffers.readPtr[0];
-	outBuffers[1] = buffers.readPtr[1];
-	buffers.consume();
+	outBuffers[0] = bufferL[readIter];
+	outBuffers[1] = bufferR[readIter];
+	readIter = (readIter + 1) % 8;
 	return outBuffers;
 }
 
 void AudioInputI2S::isr(void)
 {
-	uint32_t daddr, offset;
+	uint32_t daddr;//, offset;
 	const int32_t *src;
 	int32_t *dest_left, *dest_right;
-	bool incrementQueue;
-
 	daddr = (uint32_t)(dma.TCD->DADDR);
 	dma.clearInterrupt();
 
@@ -82,33 +89,24 @@ void AudioInputI2S::isr(void)
 		// DMA is receiving to the first half of the buffer
 		// need to remove data from the second half
 		src = (int32_t *)&i2s_rx_buffer[AUDIO_BLOCK_SAMPLES/2];
-		offset = AUDIO_BLOCK_SAMPLES/2;
-		incrementQueue = true;
 	} 
 	else 
 	{
 		// DMA is receiving to the second half of the buffer
 		// need to remove data from the first half
 		src = (int32_t *)&i2s_rx_buffer[0];
-		offset = 0;
-		incrementQueue = false;
 	}
-	
-	int32_t* left = buffers.writePtr[0];
-	int32_t* right = buffers.writePtr[1];
-	dest_left = &(left[offset]);
-	dest_right = &(right[offset]);
 
+	dest_left = bufferL[writeIter];
+	dest_right = bufferR[writeIter];
+	
 	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES/2; i++)
 	{
 		dest_left[i] = src[2*i];
 		dest_right[i] = src[2*i+1];
 	}
-
-	if (incrementQueue)
-	{
-		buffers.publish();
-	}
 	
 	arm_dcache_delete((void*)src, sizeof(i2s_rx_buffer) / 2);
+
+	writeIter = (writeIter + 1) % 8;
 }

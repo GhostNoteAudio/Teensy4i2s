@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-// This code was adapter for Paul Stoffregen's original I2S block from the Teensy audio library.
+// This code was adapted for Paul Stoffregen's original I2S block from the Teensy audio library.
 // It is set up to specifically work with the Teensy 4, and does not support other models.
 // It provides low-overhead I2S audio input and output.
 
@@ -38,15 +38,25 @@
 // high-level explanation of how this I2S & DMA code works:
 // https://forum.pjrc.com/threads/65229?p=263104&viewfull=1#post263104
 
-BufferQueue AudioOutputI2S::buffers;
+//BufferQueue AudioOutputI2S::buffers;
 DMAChannel AudioOutputI2S::dma(false);
+
+static int32_t dataLA[AUDIO_BLOCK_SAMPLES/2] = {0};
+static int32_t dataLB[AUDIO_BLOCK_SAMPLES/2] = {0};
+static int32_t dataRA[AUDIO_BLOCK_SAMPLES/2] = {0};
+static int32_t dataRB[AUDIO_BLOCK_SAMPLES/2] = {0};
+
+int DelayMicros = 0;
+int phase = 0;
 
 void audioCallbackPassthrough(int32_t** inputs, int32_t** outputs)
 {
-	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+	delayMicroseconds(DelayMicros);
+	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES/2; i++)
 	{
-		outputs[0][i] = inputs[0][i];
-		outputs[1][i] = inputs[1][i];
+		int sin = 0;//sinf(440 * phase++ / 48000.0 * 2 * M_PI) * INT32_MAX /2;
+		outputs[0][i] = inputs[0][i] + sin;
+		outputs[1][i] = inputs[1][i] + sin;
 	}
 }
 
@@ -92,10 +102,10 @@ void AudioOutputI2S::begin()
 void AudioOutputI2S::isr(void)
 {
 	int32_t* dest;
-	int32_t* blockL;
-	int32_t* blockR;
-	uint32_t saddr, offset;
-	bool callUpdate;
+	int32_t* transmitBufferL;
+	int32_t* transmitBufferR;
+	int32_t* fillBuffers[2];
+	uint32_t saddr;
 
 	saddr = (uint32_t)(dma.TCD->SADDR);
 	dma.clearInterrupt();
@@ -104,46 +114,37 @@ void AudioOutputI2S::isr(void)
 		// DMA is transmitting the first half of the buffer
 		// so we must fill the second half
 		dest = (int32_t *)&i2s_tx_buffer[AUDIO_BLOCK_SAMPLES/2];
-		callUpdate = true;
-		offset = AUDIO_BLOCK_SAMPLES / 2;
+		transmitBufferL = dataLA;
+		transmitBufferR = dataRA;
+		fillBuffers[0] = &dataLB[0];
+		fillBuffers[1] = &dataRB[0];
 	}
 	else
 	{
 		// DMA is transmitting the second half of the buffer
 		// so we must fill the first half
 		dest = (int32_t *)i2s_tx_buffer;
-		callUpdate = false;
-		offset = 0;
+		transmitBufferL = dataLB;
+		transmitBufferR = dataRB;
+		fillBuffers[0] = &dataLA[0];
+		fillBuffers[1] = &dataRA[0];
 	}
-
-	blockL = buffers.readPtr[0];
-	blockR = buffers.readPtr[1];
 
 	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES/2; i++)
 	{
-		dest[2*i] = blockL[i+offset];
-		dest[2*i+1] = blockR[i+offset];
+		dest[2*i] = transmitBufferL[i];
+		dest[2*i+1] = transmitBufferR[i];
 	}
 	
 	arm_dcache_flush_delete(dest, sizeof(i2s_tx_buffer) / 2 );
 
-	if (callUpdate)
-	{
-		Timers::ResetFrame();
-
-		// We've finished reading all the data from the current read block
-		buffers.consume();
-
-		// Fetch the input samples
-		int32_t** dataInPtr = AudioInputI2S::getData();
-
-		// populate the next block
-		i2sAudioCallback(dataInPtr, buffers.writePtr);
-		// publish the block
-		buffers.publish();
-
-		Timers::LapInner(Timers::TIMER_TOTAL);
-	}
+	Timers::ResetFrame();
+	// Fetch the input samples
+	int32_t** dataInPtr = AudioInputI2S::getData();
+	// populate the next block
+	i2sAudioCallback(dataInPtr, fillBuffers);
+	Timers::LapInner(Timers::TIMER_TOTAL);
+	
 }
 
 // This function sets all the necessary PLL and I2S flags necessary for running
