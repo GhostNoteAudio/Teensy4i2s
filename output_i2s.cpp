@@ -41,10 +41,10 @@
 //BufferQueue AudioOutputI2S::buffers;
 DMAChannel AudioOutputI2S::dma(false);
 
-static int32_t dataLA[AUDIO_BLOCK_SAMPLES/2] = {0};
-static int32_t dataLB[AUDIO_BLOCK_SAMPLES/2] = {0};
-static int32_t dataRA[AUDIO_BLOCK_SAMPLES/2] = {0};
-static int32_t dataRB[AUDIO_BLOCK_SAMPLES/2] = {0};
+static int32_t dataLA[AUDIO_BLOCK_SAMPLES] = {0};
+static int32_t dataLB[AUDIO_BLOCK_SAMPLES] = {0};
+static int32_t dataRA[AUDIO_BLOCK_SAMPLES] = {0};
+static int32_t dataRB[AUDIO_BLOCK_SAMPLES] = {0};
 
 int DelayMicros = 0;
 int phase = 0;
@@ -52,17 +52,16 @@ int phase = 0;
 void audioCallbackPassthrough(int32_t** inputs, int32_t** outputs)
 {
 	delayMicroseconds(DelayMicros);
-	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES/2; i++)
+	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
 	{
-		int sin = 0;//sinf(440 * phase++ / 48000.0 * 2 * M_PI) * INT32_MAX /2;
-		outputs[0][i] = inputs[0][i] + sin;
-		outputs[1][i] = inputs[1][i] + sin;
+		outputs[0][i] = inputs[0][i];
+		outputs[1][i] = inputs[1][i];
 	}
 }
 
 void (*i2sAudioCallback)(int32_t** inputs, int32_t** outputs) = audioCallbackPassthrough;
 
-DMAMEM __attribute__((aligned(32))) static uint64_t i2s_tx_buffer[AUDIO_BLOCK_SAMPLES];
+DMAMEM __attribute__((aligned(32))) static uint64_t i2s_tx_buffer[AUDIO_BLOCK_SAMPLES*2];
 #include "utility/imxrt_hw.h"
 #include "imxrt.h"
 #include "i2s_timers.h"
@@ -113,7 +112,7 @@ void AudioOutputI2S::isr(void)
 	{
 		// DMA is transmitting the first half of the buffer
 		// so we must fill the second half
-		dest = (int32_t *)&i2s_tx_buffer[AUDIO_BLOCK_SAMPLES/2];
+		dest = (int32_t *)&i2s_tx_buffer[AUDIO_BLOCK_SAMPLES];
 		transmitBufferL = dataLA;
 		transmitBufferR = dataRA;
 		fillBuffers[0] = &dataLB[0];
@@ -130,7 +129,7 @@ void AudioOutputI2S::isr(void)
 		fillBuffers[1] = &dataRA[0];
 	}
 
-	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES/2; i++)
+	for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
 	{
 		dest[2*i] = transmitBufferL[i];
 		dest[2*i+1] = transmitBufferR[i];
