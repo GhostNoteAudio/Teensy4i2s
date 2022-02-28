@@ -29,9 +29,6 @@
 #include "AudioConfig.h"
 #include "i2s_timers.h"
 
-#define AudioNoInterrupts() (NVIC_DISABLE_IRQ(IRQ_SOFTWARE))
-#define AudioInterrupts()   (NVIC_ENABLE_IRQ(IRQ_SOFTWARE))
-
 #include "control_sgtl5000.h"
 #include "control_TLV320AIC3204.h"
 #include "input_i2s.h"
@@ -39,6 +36,9 @@
 
 extern AudioOutputI2S audioOutputI2S;
 extern AudioInputI2S audioInputI2S;
+
+inline void AudioDisable() { AudioOutputI2S::Enabled = false; }
+inline void AudioEnable() { AudioOutputI2S::Enabled = true; }
 
 inline void InitI2s()
 {

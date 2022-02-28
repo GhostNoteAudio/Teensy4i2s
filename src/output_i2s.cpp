@@ -40,6 +40,7 @@
 
 //BufferQueue AudioOutputI2S::buffers;
 DMAChannel AudioOutputI2S::dma(false);
+bool AudioOutputI2S::Enabled;
 
 static int32_t dataLA[AUDIO_BLOCK_SAMPLES] = {0};
 static int32_t dataLB[AUDIO_BLOCK_SAMPLES] = {0};
@@ -64,6 +65,7 @@ DMAMEM __attribute__((aligned(32))) static uint64_t i2s_tx_buffer[AUDIO_BLOCK_SA
 
 void AudioOutputI2S::begin()
 {
+	Enabled = true;
 	dma.begin(true); // Allocate the DMA channel first
 	config_i2s();
 
@@ -136,11 +138,23 @@ void AudioOutputI2S::isr(void)
 	Timers::ResetFrame();
 	// Fetch the input samples
 	int32_t** dataInPtr = AudioInputI2S::getData();
-	// populate the next block - unless CPU is at or above 98%
-	if (Timers::GetCpuLoad() < 0.98)
-		i2sAudioCallback(dataInPtr, fillBuffers);
-	Timers::LapInner(Timers::TIMER_TOTAL);
 	
+	if (!Enabled)
+	{
+		// Populate output with zeros if processing is disabled
+		for (size_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+		{
+			fillBuffers[0][i] = 0;
+			fillBuffers[1][i] = 0;
+		}
+	}
+	else if (Timers::GetCpuLoad() < 0.98)
+	{
+		// populate the next block - unless CPU is at or above 98%
+		i2sAudioCallback(dataInPtr, fillBuffers);
+	}
+
+	Timers::LapInner(Timers::TIMER_TOTAL);
 }
 
 // This function sets all the necessary PLL and I2S flags necessary for running
